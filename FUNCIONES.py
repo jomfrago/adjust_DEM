@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Sat May 27 13:05:28 2023
 
@@ -23,17 +22,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import glob
 plt.style.use('seaborn')
-#import ospybook as pb
-#import scipy.ndimage as ndi
-#from pykrige.ok import OrdinaryKriging
-#from rasterio.plot import show
-#import matplotlib.pyplot as plt
-#from pykrige.uk import UniversalKriging
+
 
 def extract_z1(in_puntos,out_puntos,dem1,dem2):
     
-    # ini=tm.time()
-    #open point shapefile
     pointData = gpd.read_file('%s.shp'%(in_puntos))
     print(pointData.crs)
     #pointData.plot()
@@ -84,39 +76,21 @@ def extract_z1(in_puntos,out_puntos,dem1,dem2):
     # agregate Z_DEMs to a point dataframe
     pointData=pointData.assign(DEM1=z_ds1,DEM2=z_ds2)
     #calculate error between Z points and Z_DEMs
-    #puntos=np.matrix(pointData)
-    #real=pointData['ORTO']
     diff_ds1=pd.DataFrame(pointData['ORTO']-pointData['DEM1'])
-    #diff_ds1=np.matrix(diff_ds1)
-    #diff_ds1=diff_ds1[:,0]
     diff_ds2=pd.DataFrame(pointData['ORTO']-pointData['DEM2'])
-    #diff_ds2=np.matrix(diff_ds2)
-    #diff_ds2=diff_ds2[:,0]
-
-    #agregate errors to point dataframe and save it as csv an shp file.
-    
+    #agregate errors to point dataframe and save it as shp file.
     pointData=pointData.assign(DIF_DEM1=diff_ds1,DIF_DEM2=diff_ds2)
-    #pointData.to_csv("PUNTOS.csv")
     pointData.to_file("%s.shp"%(out_puntos))
-    #point=gpd.read_file('PUNTOS.shp')
-    
-    
-    # plt.close('all')
-    # fin=tm.time()
-    # tiempo=fin-ini
-    
-    # print("El tiempo de ejecución es de:\n",tiempo/60, "minutos")
+
 
 def division_puntos(in_puntos,nc,m,out_train,out_test):
     
-    # ini=tm.time()
+   
     path=os.getcwd()
-    #se divide los puntos en ajuste y validacion.y se guardan en archivo csv
-    #puntos=pd.read_csv("PUNTOS.csv",sep=',')
+    #se divide los puntos en ajuste y validacion.y se guardan en archivo shp
+   
     puntos = gpd.read_file('%s.shp'%(in_puntos))
-    print(puntos.crs)
-    #puntos.plot()
-      
+    print(puntos.crs) 
     # for i in range(5,95,5):
     #    if not os.path.exists('{}//DIST_%s'.format(path)%(i)):
     #                        os.mkdir('{}//DIST_%s'.format(path)%(i))
@@ -132,15 +106,8 @@ def division_puntos(in_puntos,nc,m,out_train,out_test):
         
         test.to_file('{}//%s_%s.shp'.format(path)%(out_test,k))
         train.to_file('{}//%s_%s.shp'.format(path)%(out_train,k))
-    
-    # fin=tm.time()
-    # tiempo=fin-ini
-    # print("El tiempo de ejecución es de:\n",tiempo/60, "minutos")
 
 def calc_error(nc,in_puntos,z_points,dem_points,out_rmse,out_mae,out_mse,out_pbias):
-    
-    #metrics=np.array([], dtype=object)
-    #metrics1=np.array()
     metri_mae=np.zeros((nc,1))
     metri_mse=np.zeros((nc,1))
     metri_rmse=np.zeros((nc,1))
@@ -153,15 +120,8 @@ def calc_error(nc,in_puntos,z_points,dem_points,out_rmse,out_mae,out_mse,out_pbi
         real=puntos['%s'%(z_points)]
         real=np.transpose(np.matrix(real))
         res=puntos['%s'%(dem_points)]
-        #fabdem=puntos['FABDEM']
-        #res=pd.DataFrame(columns=['LIDAR','FABDEM'])
-        #res['LIDAR']=lidar
-        #res['FABDEM']=fabdem
         res=np.transpose(np.matrix(res))
-        #mi=np.min(res,0)
-        #ma=np.max(res,0)
         errores=real-res
-        #errorrel=(errores/real)*100
         errorprom=np.mean(errores,0)
         mae=abs(errorprom)
         errorcuadrado=np.square(errores)
@@ -179,7 +139,7 @@ def calc_error(nc,in_puntos,z_points,dem_points,out_rmse,out_mae,out_mse,out_pbi
         metri_pbias[i,]=pbias
         pbias=pd.DataFrame(metri_pbias)
         print(i)
-    # print(l)
+   
     rmse.to_csv("{}//%s.csv".format(path)%(out_rmse))
     mae.to_csv("{}//%s.csv".format(path)%(out_mae))
     pbias.to_csv("{}//%s.csv".format(path)%(out_pbias))
@@ -187,34 +147,19 @@ def calc_error(nc,in_puntos,z_points,dem_points,out_rmse,out_mae,out_mse,out_pbi
 
 
 def mapa_error(nc,base,puntos,z_field,error,binario,dem):
-    # ini=tm.time()
     path=os.getcwd()
     # Define el sistema de referencia de coordenadas del raster
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(4326)
     ###############################
     base="{}//%s.tif".format(path)%(base)
-    # base_info=get_geotiff_props(base)
-    #in_ds=gdal.Open(base)
-    #in_band=in_ds.GetRasterBand(1) 
-    
-    # # # Define las dimensiones del raster
-    # x_min, x_max, y_min, y_max = (base_info['x_min'], base_info['x_max'],
-    #                                 base_info['y_min'], base_info['y_max']) # Rango de coordenadas en metros
-    #proj=base_info['proj']
-    # x_size=base_info['width']
-    # y_size=base_info['height']
-    # x_res=base_info['res_x']
-    # y_res=base_info['res_y']
-    
     ###############################
     
-    # Carga los puntos desde un archivo CSV con las columnas "LAT", "LON" y "Z"
+    # Carga los puntos desde un archivo .shp con las columnas "LAT", "LON" y "Z"
     # for l in range (5,95,5):
     for i in range(nc):      
         in_points='{}\%s_%s.shp'.format(path)%(puntos,i)
         zfield='%s'%(z_field)
-        #zfiled='DIF_FABDEM'
         out_idw='{}//%s_idw_%s.tif'.format(path)%(dem,i)
         out_idnn='{}//%s_invdistnn_%s.tif'.format(path)%(dem,i)
         out_near='{}//%s_nearest_%s.tif'.format(path)%(dem,i)
@@ -222,7 +167,6 @@ def mapa_error(nc,base,puntos,z_field,error,binario,dem):
         out_average='{}//%s_average_%s.tif'.format(path)%(dem,i)
         out_prome='{}//%s_%s_%s.tif'.format(path)%(dem,error,i)
         out_bina='{}//%s_%s_%s.tif'.format(path)%(dem,binario,i)
-        #in_ref='{}//%s.tif'.format(path)%(base)
         options1=gdal.GridOptions(format='GTiff',outputType=6,zfield='%s'%(zfield),
                           noData=-9999,algorithm="invdist:power=10.0:smoothing:2.0",
                           outputSRS=srs)
@@ -273,63 +217,16 @@ def mapa_error(nc,base,puntos,z_field,error,binario,dem):
         #se saca el promedio de los 5 metodos
         
         ref='%s'%(base)
-        #in_ds=gdal.Open(ref)
-        #in_band=in_ds.GetRasterBand(1)
-        # props=get_geotiff_props(ref)
-        # points_file = gpd.read_file(in_points)
-        # x=points_file['LON']
-        # y=points_file['LAT']
-        # z=list(points_file['%s'%(zfield)])
-        # z=np.transpose(np.matrix(z))
-        # xi, yi =(np.linspace(x_min, x_max,256), np.linspace(y_min, y_max,256))
-        # OK = OrdinaryKriging(
-        # np.array(x),
-        # np.array(y),
-        # z,
-        # variogram_model ='linear',
-        # verbose = True,
-        # enable_plotting = True,
-        # coordinates_type = "euclidean",
-        # )
-    
-        # # Evaluate the method on grid
-        # zi,sigma=OK.execute("grid", xi, yi)
-        #array_to_geotiff(zi,"kriging_%s.tif"%(variogram), -9999, base_info)
-        #OrdinaryKriging(x, y, z)
-        # Export raster
-        # export_kde_raster(Z=zi,XX=xi,YY=yi,
-        #                     min_x = x_min, max_x = x_max, min_y = y_min, max_y = y_max,
-        #                     proj =proj, filename ='%s'%(out_krig))
         
         band_prome=(rasterBand1+rasterBand2+rasterBand3+rasterBand4+rasterBand5)/5
-        
-        # band_prome1 = pb.make_slices(band_prome, (3, 3))
-        # band_prome2 = np.ma.dstack(band_prome1)
-        # rows, cols = in_band.YSize, in_band.XSize
-        # band_prome3 = np.ones((rows, cols), np.float32)*-9999
-        # band_prome3[1:-1, 1:-1] = np.mean(band_prome2, 2)
-        
-        # band_prome4 = ndi.filters.uniform_filter(
-        #     band_prome3, size=3, mode='nearest')
-        
+
         [l,m]=band_prome.shape
         
-        # for o in range(l):
-        #     for p in range(m):
-        #         if band_prome4[o,p]<-5:
-        #             band_prome4[o,p]=-9999
-        #         else:
-        #             band_prome4[o,p]=band_prome4[o,p]
-        
-        #ref='%s'%(out_idw)
         props=get_geotiff_props(ref)
         out_file="%s"%(out_prome)
         array_to_geotiff(band_prome,'{}'.format(out_file),-9999,props)
         #se crea el mapa binario
-        
         band_bin=np.zeros((band_prome.shape))
-        
-        
         for j in range(l):
             for k in range(m):
                 if band_prome[j,k]<=0:
@@ -672,11 +569,7 @@ def extract_z2(nc,in_points,out_points,dem1,dem2):
         pointData=pointData.assign(DEM1_CORR=z_ds1,DEM2_CORR=z_ds2)
         pointData.to_file("{}//%s_%s.shp".format(path)%(out_points,j))
 
-# def erase_shp(nc,points):
-#      path=os.getcwd()
-#      for i in range(nc):      
-#          in_points='{}\%s_%s.shp'.format(path)%(points,i)
-#          os.remove(in_points)
+
     
 def visualize_results(dem,rmse1,rmse2,mae1,mae2,mse1,mse2,pbias1,pbias2):
     
@@ -852,12 +745,9 @@ def promedio_corregido(nc,patron,out_promedio):
     
     path=os.getcwd() 
     # Lista de nombres de archivos
-    #lista_rasters = ["LIDAR1.tif", "LIDAR2.tif", "LIDAR3.tif"]  # Reemplaza con tus nombres de archivo
-    #out_prome='%s.tif'%(out_promedio)
     # Patrón para buscar archivos raster específicos
     patron = "%s*"%(patron) 
     lista_rasters = glob.glob(f"{path}/{patron}")
-    # lista_rasters=lista_rasters[0:2]
     # Variables para almacenar la suma y el número total de rasters
     suma = 0
     num_rasters = 0
@@ -869,19 +759,16 @@ def promedio_corregido(nc,patron,out_promedio):
         with rasterio.open(raster_nombre) as src:
             # Leer los datos del raster como un arreglo numpy
             data = src.read(1)  # Se asume que los datos están en la banda 1
-            
             # Sumar los valores del raster al acumulador
             suma += data
 
             # Incrementar el contador de rasters
             num_rasters += 1
-        #os.remove(raster_nombre)
     # Calcular el promedio dividiendo la suma total entre el número de rasters
     promedio = suma /nc
     
     out_file="%s.tif"%(out_promedio)
     array_to_geotiff(promedio,'{}'.format(out_file),-9999,props)
-    
     for ds in lista_rasters:
         os.remove(ds)
         
